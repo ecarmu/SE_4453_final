@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Group 14 App</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        #message {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Welcome to Group 14’s App</h1>
+    <button onclick="fetchMessage()">Say Hello</button>
+    <p id="message"></p>
+
+    <script>
+        async function fetchMessage() {
+            const res = await fetch('/api/hello');
+            const data = await res.json();
+            document.getElementById('message').textContent = data.message;
+        }
+    </script>
+</body>
+
+</html>
