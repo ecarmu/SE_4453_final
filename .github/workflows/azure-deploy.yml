@@ -1,0 +1,35 @@
+name: CI/CD to Azure App Service
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE=acrfinal20070006044.azurecr.io/finalapp:${{ github.sha }}
+          docker build -t $IMAGE .
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login acrfinal20070006044.azurecr.io --username "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+          docker push $IMAGE
+
+      - name: Update App Service container
+        run: |
+          az webapp config container set \
+            --name web-final-20070006044 \
+            --resource-group rg-final-20070006044-21070006054 \
+            --docker-custom-image-name $IMAGE \
+            --docker-registry-server-url https://acrfinal20070006044.azurecr.io \
+            --registry-managed-identity-client-id $(az webapp identity show --name web-final-20070006044 --resource-group rg-final-20070006044-21070006054 --query principalId -o tsv)
+          az webapp restart --name web-final-20070006044 --resource-group rg-final-20070006044-21070006054
