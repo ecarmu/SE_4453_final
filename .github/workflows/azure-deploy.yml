@@ -18,18 +18,28 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Build and push Docker image
+        shell: bash
         run: |
-          IMAGE=acrfinal20070006044.azurecr.io/finalapp:${{ github.sha }}
-          docker build -t $IMAGE .
-          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login acrfinal20070006044.azurecr.io --username "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
-          docker push $IMAGE
+          IMAGE=acrfinal20070006044.azurecr.io/finalapp:${GITHUB_SHA}
+          echo "Building image $IMAGE"
+          docker build -t "$IMAGE" .
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login acrfinal20070006044.azurecr.io \
+            --username "${{ secrets.REGISTRY_USERNAME }}" \
+            --password-stdin
+          docker push "$IMAGE"
+        env:
+          GITHUB_SHA: ${{ github.sha }}
 
       - name: Update App Service container
+        shell: bash
+        env:
+          IMAGE: acrfinal20070006044.azurecr.io/finalapp:${{ github.sha }}
         run: |
+          echo "Deploying image $IMAGE"
           az webapp config container set \
             --name web-final-20070006044 \
             --resource-group rg-final-20070006044-21070006054 \
-            --docker-custom-image-name $IMAGE \
-            --docker-registry-server-url https://acrfinal20070006044.azurecr.io \
-            --registry-managed-identity-client-id $(az webapp identity show --name web-final-20070006044 --resource-group rg-final-20070006044-21070006054 --query principalId -o tsv)
+            --docker-custom-image-name "$IMAGE" \
+            --docker-registry-server-url https://acrfinal20070006044.azurecr.io
           az webapp restart --name web-final-20070006044 --resource-group rg-final-20070006044-21070006054
+
